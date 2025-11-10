@@ -1,0 +1,5 @@
+# Python virtual environment files
+Scripts/
+Lib/
+Include/
+pyvenv.cfg
