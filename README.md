@@ -43,8 +43,10 @@ Repository: [github.com/JMF-Alex/HAC](https://github.com/JMF-Alex/HAC)
 
 ### Prerequisites
 
-No external dependencies required.
-Only a **web browser** (Chrome, Edge, Firefox, etc.).
+Install dependencies:
+```bash
+pip install pillow keyboard
+```
 
 ### Installation
 
