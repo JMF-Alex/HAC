@@ -76,7 +76,7 @@ Once opened, you can:
 
 ## Roadmap
 
-- [ ] Improve the design
+- [x] Improve the design
 - [ ] Add an option to change the hotkey
 
 ## Contributing
