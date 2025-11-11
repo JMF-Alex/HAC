@@ -76,8 +76,8 @@ Once opened, you can:
 
 ## Roadmap
 
-- [x] Improve the design
-- [ ] Add an option to change the hotkey
+- [x] Add an option to change the hotkey
+- [ ] Add an option for hold click
 
 ## Contributing
 

@@ -4,9 +4,13 @@ Lib/
 Include/
 pyvenv.cfg
 
+# Build files
 dist/
 build/
-main.spec
+*.spec
 
-src/core/__pycache__/
-src/gui/__pycache__/
+# Python cache files
+__pycache__/
+
+# VSCode settings for this project
+.vscode/
