@@ -3,3 +3,10 @@ Scripts/
 Lib/
 Include/
 pyvenv.cfg
+
+dist/
+build/
+main.spec
+
+src/core/__pycache__/
+src/gui/__pycache__/
