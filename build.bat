@@ -7,7 +7,7 @@ set SCRIPT=src\main.py
 set EXE_NAME=HAC_Autoclicker.exe
 set ICON=src\assets\icon.ico
 
-python -m PyInstaller --onefile --noconsole --icon="%ICON%" "%SCRIPT%"
+python -m PyInstaller --onefile --noconsole --icon="%ICON%" --add-data "src\assets\icon.ico;assets" "%SCRIPT%"
 
 rmdir /s /q build
 del main.spec

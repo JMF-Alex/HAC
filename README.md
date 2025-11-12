@@ -76,8 +76,9 @@ Once opened, you can:
 
 ## Roadmap
 
-- [x] Add an option to change the hotkey
-- [ ] Add an option for hold click
+- [x] Add an option for hold click
+- [ ] Save the interval in the json file
+- [ ] Add an option to hold different keywords
 
 ## Contributing
 

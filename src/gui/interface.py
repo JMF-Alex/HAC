@@ -1,3 +1,5 @@
+import os
+import sys
 import tkinter as tk
 from tkinter import ttk
 import keyboard
@@ -7,10 +9,11 @@ from core.config import load_config, save_config
 VERSION = "v0.3.0"
 
 def run_app():
-    global interval_entry, status_label, hotkey_label, current_hotkey
+    global interval_entry, status_label, hotkey_label, current_hotkey, mode_var
 
     config = load_config()
     current_hotkey = config.get("hotkey", "F6")
+    saved_mode = config.get("mode", "Click")
 
     def toggle_hotkey():
         if clicking_status():
@@ -23,7 +26,12 @@ def run_app():
             interval = float(interval_entry.get())
         except ValueError:
             interval = 0.01
-        start_clicking(interval)
+        selected_mode = mode_var.get()
+        save_config({
+            "hotkey": current_hotkey,
+            "mode": selected_mode
+        })
+        start_clicking(interval, selected_mode)
         status_label.config(text="● Clicking", foreground="#4CAF50")
 
     def stop():
@@ -53,7 +61,10 @@ def run_app():
             keyboard.add_hotkey(new_key, toggle_hotkey)
 
             current_hotkey = new_key
-            save_config({"hotkey": current_hotkey})
+            save_config({
+                "hotkey": current_hotkey,
+                "mode": mode_var.get()
+            })
 
             hotkey_waiting = False
             update_hotkey_display()
@@ -75,7 +86,15 @@ def run_app():
     style.configure("TButton", font=("Segoe UI", 10, "bold"), padding=6)
     style.map("TButton", background=[("active", "#3A3A3A")], relief=[("pressed", "flat")])
 
-    ttk.Label(root, text="Interval between clicks (seconds):").pack(pady=(20, 5))
+    style.configure("Dark.TCombobox", fieldbackground="#2E2E2E", background="#2E2E2E", foreground="white", arrowcolor="white", borderwidth=0, relief="flat", padding=5, font=("Segoe UI", 10, "bold"))
+    style.map("Dark.TCombobox", fieldbackground=[("readonly", "#2E2E2E"), ("focus", "#3A3A3A")], background=[("readonly", "#2E2E2E"), ("focus", "#3A3A3A")], selectbackground=[("readonly", "#4CAF50")], selectforeground=[("readonly", "white")], arrowcolor=[("readonly", "white"), ("focus", "white")])
+
+    ttk.Label(root, text="Mode:").place(x=15, y=15)
+    mode_var = tk.StringVar(value=saved_mode)
+    mode_combo = ttk.Combobox(root, textvariable=mode_var, values=["Click", "Hold"], width=10, state="readonly", style="Dark.TCombobox")
+    mode_combo.place(x=70, y=15)
+
+    ttk.Label(root, text="Interval between clicks (seconds):").pack(pady=(60, 5))
 
     interval_entry = ttk.Entry(root, justify='center', width=10)
     interval_entry.insert(0, "0.01")
@@ -97,15 +116,12 @@ def run_app():
     hotkey_label.pack(pady=(5, 2))
 
     hotkey_waiting = False
-    change_btn = tk.Button(root, text="Change Hotkey", command=change_hotkey, bg="#3A3A3A",
-                           fg="white", relief="flat", activebackground="#555555",
-                           font=("Segoe UI", 9, "bold"), width=14)
+    change_btn = tk.Button(root, text="Change Hotkey", command=change_hotkey, bg="#3A3A3A", fg="white", relief="flat", activebackground="#555555", font=("Segoe UI", 9, "bold"), width=14)
     change_btn.place(relx=0.0, rely=1.0, x=10, y=-10, anchor="sw")
 
     keyboard.add_hotkey(current_hotkey, toggle_hotkey)
 
-    version_label = ttk.Label(root, text=f"HAC Autoclicker {VERSION}",
-                              foreground="#777777", font=("Segoe UI", 8))
+    version_label = ttk.Label(root, text=f"HAC Autoclicker {VERSION}", foreground="#777777", font=("Segoe UI", 8))
     version_label.place(relx=1.0, rely=1.0, x=-10, y=-10, anchor="se")
 
     def on_close():
@@ -120,5 +136,7 @@ def run_app():
     x = (root.winfo_screenwidth() // 2) - (width // 2)
     y = (root.winfo_screenheight() // 2) - (height // 2)
     root.geometry(f"{width}x{height}+{x}+{y}")
+
+    root.iconbitmap(os.path.join(sys._MEIPASS, "assets", "icon.ico"))
 
     root.mainloop()
