@@ -6,12 +6,13 @@ import keyboard
 from core.clicker import start_clicking, stop_clicking
 from core.config import load_config, save_config
 
-VERSION = "v0.3.0"
+VERSION = "v0.4.1"
 
 def run_app():
     global interval_entry, status_label, hotkey_label, current_hotkey, mode_var
 
     config = load_config()
+    saved_interval = config.get("interval", 0.01)
     current_hotkey = config.get("hotkey", "F6")
     saved_mode = config.get("mode", "Click")
 
@@ -26,11 +27,15 @@ def run_app():
             interval = float(interval_entry.get())
         except ValueError:
             interval = 0.01
+
         selected_mode = mode_var.get()
+
         save_config({
+            "interval": interval,
             "hotkey": current_hotkey,
             "mode": selected_mode
         })
+
         start_clicking(interval, selected_mode)
         status_label.config(text="● Clicking", foreground="#4CAF50")
 
@@ -63,7 +68,8 @@ def run_app():
             current_hotkey = new_key
             save_config({
                 "hotkey": current_hotkey,
-                "mode": mode_var.get()
+                "mode": mode_var.get(),
+                "interval": float(interval_entry.get() or 0.01)
             })
 
             hotkey_waiting = False
@@ -85,9 +91,8 @@ def run_app():
     style.configure("TEntry", fieldbackground="#2E2E2E", foreground="white", borderwidth=0, relief="flat")
     style.configure("TButton", font=("Segoe UI", 10, "bold"), padding=6)
     style.map("TButton", background=[("active", "#3A3A3A")], relief=[("pressed", "flat")])
-
     style.configure("Dark.TCombobox", fieldbackground="#2E2E2E", background="#2E2E2E", foreground="white", arrowcolor="white", borderwidth=0, relief="flat", padding=5, font=("Segoe UI", 10, "bold"))
-    style.map("Dark.TCombobox", fieldbackground=[("readonly", "#2E2E2E"), ("focus", "#3A3A3A")], background=[("readonly", "#2E2E2E"), ("focus", "#3A3A3A")], selectbackground=[("readonly", "#4CAF50")], selectforeground=[("readonly", "white")], arrowcolor=[("readonly", "white"), ("focus", "white")])
+    style.map("Dark.TCombobox", fieldbackground=[("readonly", "#2E2E2E"), ("focus", "#3A3A3A")])
 
     ttk.Label(root, text="Mode:").place(x=15, y=15)
     mode_var = tk.StringVar(value=saved_mode)
@@ -95,9 +100,8 @@ def run_app():
     mode_combo.place(x=70, y=15)
 
     ttk.Label(root, text="Interval between clicks (seconds):").pack(pady=(60, 5))
-
     interval_entry = ttk.Entry(root, justify='center', width=10)
-    interval_entry.insert(0, "0.01")
+    interval_entry.insert(0, str(saved_interval))
     interval_entry.pack(ipady=3)
 
     button_frame = tk.Frame(root, bg="#1E1E1E")
@@ -138,5 +142,4 @@ def run_app():
     root.geometry(f"{width}x{height}+{x}+{y}")
 
     root.iconbitmap(os.path.join(sys._MEIPASS, "assets", "icon.ico"))
-
     root.mainloop()

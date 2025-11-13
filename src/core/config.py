@@ -4,6 +4,7 @@ import os
 CONFIG_PATH = os.path.join(os.path.expanduser("~"), "hac_config.json")
 
 DEFAULT_CONFIG = {
+    "interval": 0.01,
     "hotkey": "F6",
     "mode": "Click"
 }
