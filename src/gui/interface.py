@@ -6,15 +6,16 @@ import keyboard
 from core.clicker import start_clicking, stop_clicking
 from core.config import load_config, save_config
 
-VERSION = "v0.4.1"
+VERSION = "v0.5.0"
 
 def run_app():
-    global interval_entry, status_label, hotkey_label, current_hotkey, mode_var
+    global interval_entry, status_label, hotkey_label, current_hotkey, mode_var, key_var
 
     config = load_config()
     saved_interval = config.get("interval", 0.01)
     current_hotkey = config.get("hotkey", "F6")
     saved_mode = config.get("mode", "Click")
+    saved_target = config.get("target_key", "left")
 
     def toggle_hotkey():
         if clicking_status():
@@ -29,15 +30,17 @@ def run_app():
             interval = 0.01
 
         selected_mode = mode_var.get()
+        selected_key = key_var.get()
 
         save_config({
             "interval": interval,
             "hotkey": current_hotkey,
-            "mode": selected_mode
+            "mode": selected_mode,
+            "target_key": selected_key
         })
 
-        start_clicking(interval, selected_mode)
-        status_label.config(text="● Clicking", foreground="#4CAF50")
+        start_clicking(interval, selected_mode, selected_key)
+        status_label.config(text="● Running", foreground="#4CAF50")
 
     def stop():
         stop_clicking()
@@ -127,6 +130,25 @@ def run_app():
 
     version_label = ttk.Label(root, text=f"HAC Autoclicker {VERSION}", foreground="#777777", font=("Segoe UI", 8))
     version_label.place(relx=1.0, rely=1.0, x=-10, y=-10, anchor="se")
+
+    ttk.Label(root, text="Key/Button:").place(x=220, y=15)
+    key_var = tk.StringVar(value=saved_target)
+    key_combo = ttk.Combobox(
+        root,
+        textvariable=key_var,
+        values=[
+            "left", "right", "middle",
+            "space", "shift", "ctrl", "alt",
+            "enter", "tab", "up", "down", "left_arrow", "right_arrow",
+            "a", "b", "c", "d", "e", "f", "g", "h", "i", "j",
+            "k", "l", "m", "n", "o", "p", "q", "r", "s", "t",
+            "u", "v", "w", "x", "y", "z"
+        ],
+        width=12,
+        state="readonly",
+        style="Dark.TCombobox"
+    )
+    key_combo.place(x=300, y=15)
 
     def on_close():
         stop_clicking()

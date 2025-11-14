@@ -6,7 +6,8 @@ CONFIG_PATH = os.path.join(os.path.expanduser("~"), "hac_config.json")
 DEFAULT_CONFIG = {
     "interval": 0.01,
     "hotkey": "F6",
-    "mode": "Click"
+    "mode": "Click",
+    "target_key": "left"
 }
 
 def load_config():

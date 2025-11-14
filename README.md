@@ -76,9 +76,9 @@ Once opened, you can:
 
 ## Roadmap
 
-- [x] Add an option for hold click
 - [x] Save the interval in the json file
-- [ ] Add an option to hold different keywords
+- [x] Add an option to hold different keywords
+- [ ] Add a button to save the config
 
 ## Contributing
 

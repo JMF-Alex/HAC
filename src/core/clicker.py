@@ -1,46 +1,34 @@
-import ctypes
 import threading
 import time
-
-SendInput = ctypes.windll.user32.SendInput
-MOUSEEVENTF_LEFTDOWN = 0x0002
-MOUSEEVENTF_LEFTUP   = 0x0004
+from core.input_simulator import InputSimulator
 
 clicking = False
 mode = "Click"
-
-def click():
-    ctypes.windll.user32.mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
-    ctypes.windll.user32.mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
-
-def hold_mouse():
-    ctypes.windll.user32.mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
-
-def release_mouse():
-    ctypes.windll.user32.mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
+simulator = InputSimulator("left")
 
 def clicker_loop(interval: float):
     global clicking
     while clicking:
-        click()
+        simulator.click()
         if interval > 0:
             time.sleep(interval)
 
-def start_clicking(interval: float, selected_mode: str):
-    global clicking, mode
+def start_clicking(interval: float, selected_mode: str, target_key: str):
+    global clicking, mode, simulator
     if clicking:
         return
     clicking = True
     mode = selected_mode
+    simulator.set_key(target_key)
 
     if mode == "Click":
         threading.Thread(target=clicker_loop, args=(interval,), daemon=True).start()
     elif mode == "Hold":
-        hold_mouse()
+        simulator.press()
 
 def stop_clicking():
     global clicking
     if clicking:
         if mode == "Hold":
-            release_mouse()
+            simulator.release()
         clicking = False
