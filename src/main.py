@@ -1,4 +1,5 @@
-from gui.interface import run_app
+from gui.app import HACApp
 
 if __name__ == "__main__":
-    run_app()
+    app = HACApp()
+    app.run()

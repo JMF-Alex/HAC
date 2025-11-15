@@ -76,9 +76,9 @@ Once opened, you can:
 
 ## Roadmap
 
-- [x] Save the interval in the json file
 - [x] Add an option to hold different keywords
-- [ ] Add a button to save the config
+- [x] Add a button to save the config
+- [ ] Move all buttons to menu bar
 
 ## Contributing
 
