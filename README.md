@@ -76,7 +76,6 @@ Once opened, you can:
 
 ## Roadmap
 
-- [x] Add an option to hold different keywords
 - [x] Add a button to save the config
 - [ ] Move all buttons to menu bar
 
