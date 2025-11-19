@@ -1,5 +1,5 @@
 import keyboard
-from core.clicker import start_clicking, stop_clicking, clicking
+import core.clicker as clicker
 from core.config import save_config
 
 class ClickerController:
@@ -18,7 +18,7 @@ class ClickerController:
         self.update_hotkey_display()
 
     def toggle(self):
-        if clicking:
+        if clicker.clicking:
             self.stop()
         else:
             self.start()
@@ -39,11 +39,11 @@ class ClickerController:
             "target_key": key
         })
 
-        start_clicking(interval, mode, key)
+        clicker.start_clicking(interval, mode, key)
         self.status_label.config(text="● Running", foreground="#4CAF50")
 
     def stop(self):
-        stop_clicking()
+        clicker.stop_clicking()
         self.status_label.config(text="● Stopped", foreground="#F44336")
 
     def update_hotkey_display(self):
