@@ -45,7 +45,7 @@ Repository: [github.com/JMF-Alex/HAC](https://github.com/JMF-Alex/HAC)
 
 Install dependencies:
 ```bash
-pip install pillow keyboard
+pip install keyboard
 ```
 
 ### Installation
