@@ -8,7 +8,7 @@ from gui.menu.file_menu import FileMenu
 from gui.layout import LayoutManager
 
 class HACApp:
-    VERSION = "v0.6.1"
+    VERSION = "v0.6.2"
 
     def __init__(self):
         self.root = tk.Tk()
