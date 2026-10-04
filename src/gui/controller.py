@@ -18,7 +18,7 @@ class ClickerController:
         self.update_hotkey_display()
 
     def toggle(self):
-        if clicker.clicking:
+        if clicker.is_clicking():
             self.stop()
         else:
             self.start()
