@@ -33,7 +33,7 @@ class HACApp:
         style.map("Dark.TCombobox", fieldbackground=[("readonly", "#2E2E2E"), ("focus", "#3A3A3A")])
 
     def init_app(self):
-        self.controller = ClickerController(None, None, None, None, None)
+        self.controller = ClickerController(self.root, None, None, None, None, None)
 
         self.layout = LayoutManager(self.root, self.controller, self.config)
 

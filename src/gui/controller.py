@@ -2,8 +2,10 @@ import keyboard
 import core.clicker as clicker
 from core.config import save_config
 
+
 class ClickerController:
-    def __init__(self, interval_entry, mode_var, key_var, hotkey_label, status_label):
+    def __init__(self, root, interval_entry, mode_var, key_var, hotkey_label, status_label):
+        self.root = root
         self.interval_entry = interval_entry
         self.mode_var = mode_var
         self.key_var = key_var
@@ -12,9 +14,12 @@ class ClickerController:
         self.current_hotkey = None
         self.hotkey_waiting = False
 
+    def _on_hotkey(self):
+        self.root.after(0, self.toggle)
+
     def set_hotkey(self, hotkey):
         self.current_hotkey = hotkey
-        keyboard.add_hotkey(hotkey, self.toggle)
+        keyboard.add_hotkey(hotkey, self._on_hotkey)
         self.update_hotkey_display()
 
     def toggle(self):
@@ -23,12 +28,14 @@ class ClickerController:
         else:
             self.start()
 
-    def start(self):
+    def _read_interval(self):
         try:
-            interval = float(self.interval_entry.get())
+            return float(self.interval_entry.get())
         except ValueError:
-            interval = 0.01
+            return 0.01
 
+    def start(self):
+        interval = self._read_interval()
         mode = self.mode_var.get()
         key = self.key_var.get()
 
@@ -56,18 +63,22 @@ class ClickerController:
         self.hotkey_label.config(text="Press a key...", foreground="#FFC107")
 
         def on_key(event):
-            new_key = event.name.upper()
-            keyboard.unhook_all_hotkeys()
-            keyboard.add_hotkey(new_key, self.toggle)
-            self.current_hotkey = new_key
-            save_config({
-                "hotkey": new_key,
-                "mode": self.mode_var.get(),
-                "interval": float(self.interval_entry.get() or 0.01)
-            })
-            self.hotkey_waiting = False
-            self.update_hotkey_display()
-            self.hotkey_label.config(foreground="#BBBBBB")
+            if event.event_type != "down":
+                return
             keyboard.unhook(on_key)
+            new_key = event.name.upper()
+            self.root.after(0, lambda: self._apply_new_hotkey(new_key))
 
         keyboard.hook(on_key)
+
+    def _apply_new_hotkey(self, new_key):
+        keyboard.unhook_all_hotkeys()
+        self.set_hotkey(new_key)
+        save_config({
+            "interval": self._read_interval(),
+            "hotkey": new_key,
+            "mode": self.mode_var.get(),
+            "target_key": self.key_var.get()
+        })
+        self.hotkey_waiting = False
+        self.hotkey_label.config(foreground="#BBBBBB")
