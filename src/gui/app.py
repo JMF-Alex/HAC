@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class HACApp:
-    VERSION = "v0.7.0"
+    VERSION = "v0.6.3"
     WIDTH, HEIGHT = 400, 300
 
     def __init__(self):
