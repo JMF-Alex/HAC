@@ -13,8 +13,6 @@ DEFAULT_TARGET_KEY = "mouse_left"
 
 MOUSE_KEYS = ("mouse_left", "mouse_right", "mouse_middle")
 
-# Values offered in the "Key/Button" combobox. Plain "left"/"right" are the
-# keyboard arrows; mouse buttons always carry the "mouse_" prefix.
 KEY_CHOICES = (
     *MOUSE_KEYS,
     "space", "shift", "ctrl", "alt", "enter", "tab",
