@@ -1,23 +1,30 @@
 import ctypes
+
 import keyboard
 
+from core.constants import MOUSE_KEYS
+
 MOUSEEVENTF_LEFTDOWN = 0x0002
-MOUSEEVENTF_LEFTUP   = 0x0004
+MOUSEEVENTF_LEFTUP = 0x0004
 MOUSEEVENTF_RIGHTDOWN = 0x0008
-MOUSEEVENTF_RIGHTUP   = 0x0010
+MOUSEEVENTF_RIGHTUP = 0x0010
 MOUSEEVENTF_MIDDLEDOWN = 0x0020
-MOUSEEVENTF_MIDDLEUP   = 0x0040
+MOUSEEVENTF_MIDDLEUP = 0x0040
+
+_MOUSE_FLAGS = {
+    "mouse_left": (MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP),
+    "mouse_right": (MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP),
+    "mouse_middle": (MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_MIDDLEUP),
+}
+assert set(_MOUSE_FLAGS) == set(MOUSE_KEYS)
+
 
 class InputSimulator:
-    def __init__(self, target_key="left"):
-        self.set_key(target_key)
-
-    def set_key(self, key: str):
-        self.key = key.lower()
-        if self.key in ["left", "right", "middle"]:
-            self.is_mouse = True
-        else:
-            self.is_mouse = False
+    def __init__(self, key: str):
+        self.key = key.strip().lower()
+        self.is_mouse = self.key in _MOUSE_FLAGS
+        if not self.is_mouse:
+            keyboard.key_to_scan_codes(self.key)
 
     def press(self):
         if self.is_mouse:
@@ -36,12 +43,5 @@ class InputSimulator:
         self.release()
 
     def _mouse_event(self, down: bool):
-        event = 0
-        if self.key == "left":
-            event = MOUSEEVENTF_LEFTDOWN if down else MOUSEEVENTF_LEFTUP
-        elif self.key == "right":
-            event = MOUSEEVENTF_RIGHTDOWN if down else MOUSEEVENTF_RIGHTUP
-        elif self.key == "middle":
-            event = MOUSEEVENTF_MIDDLEDOWN if down else MOUSEEVENTF_MIDDLEUP
-
-        ctypes.windll.user32.mouse_event(event, 0, 0, 0, 0)
+        down_flag, up_flag = _MOUSE_FLAGS[self.key]
+        ctypes.windll.user32.mouse_event(down_flag if down else up_flag, 0, 0, 0, 0)
