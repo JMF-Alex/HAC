@@ -2,7 +2,8 @@ import re
 import tkinter as tk
 
 from core.constants import KEY_CHOICES, MODES
-from gui import theme
+from core.paths import resource_path
+from gui import icon, theme
 from gui.widgets.buttons import FlatButton
 from gui.widgets.cards import Card
 from gui.widgets.comboboxes import FlatCombobox
@@ -13,6 +14,7 @@ from gui.widgets.segmented import SegmentedControl
 
 _INTERVAL_RE = re.compile(r"^\d*[.,]?\d*$")
 MAX_MESSAGE_CHARS = 70
+LOGO_SIZE = 32
 
 
 class LayoutManager:
@@ -38,7 +40,8 @@ class LayoutManager:
         self.root.grid_columnconfigure(2, weight=1)
         self.root.grid_rowconfigure(0, weight=1)
 
-        self.sidebar = ProfileSidebar(self.root, self.APP_NAME, self.version)
+        self.logo = icon.load_icon_photo(resource_path("assets", "icon.ico"), LOGO_SIZE, master=self.root)
+        self.sidebar = ProfileSidebar(self.root, self.APP_NAME, self.version, logo=self.logo)
         self.sidebar.grid(row=0, column=0, sticky="ns")
         self.sidebar.set_profiles(
             [ProfileSummary.from_config(self.PROFILE_NAME, self.config)], active=self.PROFILE_NAME
@@ -48,7 +51,7 @@ class LayoutManager:
         main = tk.Frame(self.root, bg=theme.BG)
         main.grid(row=0, column=2, sticky="nsew")
         content = tk.Frame(main, bg=theme.BG)
-        content.pack(fill="both", expand=True, padx=32, pady=(28, 26))
+        content.pack(fill="both", expand=True, padx=36, pady=(30, 28))
 
         self._build_header(content)
         self._build_cards(content)
@@ -76,7 +79,7 @@ class LayoutManager:
 
     def _build_cards(self, parent):
         grid = tk.Frame(parent, bg=theme.BG)
-        grid.pack(fill="x", pady=(24, 0))
+        grid.pack(fill="x", pady=(26, 0))
         grid.grid_columnconfigure((0, 1), weight=1, uniform="cards")
         grid.grid_rowconfigure((0, 1), weight=1, uniform="rows")
 
@@ -85,9 +88,10 @@ class LayoutManager:
                 row=row, column=column, sticky="nsew",
                 padx=(0, 8) if column == 0 else (8, 0), pady=(0, 16) if row == 0 else 0,
             )
-            card.configure(height=124)
+            card.configure(height=128)
             card.pack_propagate(False)
 
+        # Interval
         interval_card = Card(grid, "Interval")
         row = tk.Frame(interval_card.body, bg=theme.SURFACE)
         row.pack(fill="x")
@@ -129,14 +133,16 @@ class LayoutManager:
 
     def _build_action(self, parent):
         self.toggle_button = FlatButton(
-            parent, "Start clicking", command=self.controller.toggle, variant="success",
-            font=theme.font(12, "bold"), pady=16,
+            parent, "Start clicking", command=self.controller.toggle, variant="primary",
+            font=theme.font(12, "bold"), pady=15,
         )
-        self.toggle_button.pack(fill="x", pady=(24, 0))
-        self.hint_label = tk.Label(
-            parent, font=theme.font(9), fg=theme.TEXT_MUTED, bg=theme.BG, anchor="center",
-        )
-        self.hint_label.pack(fill="x", pady=(12, 0))
+        self.toggle_button.pack(fill="x", pady=(26, 0))
+
+        hint = tk.Frame(parent, bg=theme.BG)
+        hint.pack(pady=(14, 0))
+        self._hint_prefix = tk.Label(hint, text="Press", font=theme.font(9), fg=theme.TEXT_MUTED, bg=theme.BG)
+        self._hint_key = Keycap(hint, compact=True)
+        self.hint_label = tk.Label(hint, font=theme.font(9), fg=theme.TEXT_MUTED, bg=theme.BG)
         self._render_hint()
 
 
@@ -144,7 +150,7 @@ class LayoutManager:
         running = kind == "running"
         self.status_pill.set_kind(kind)
         self.toggle_button.set_text("Stop clicking" if running else "Start clicking")
-        self.toggle_button.set_variant("danger" if running else "success")
+        self.toggle_button.set_variant("danger" if running else "primary")
         self._error_text = message if kind == "error" else None
         self._render_hint()
 
@@ -164,17 +170,31 @@ class LayoutManager:
         self.mode_control.set_enabled(enabled)
         self.key_combo.set_enabled(enabled)
 
+    @property
+    def hint_text(self) -> str:
+        parts = []
+        if self._hint_prefix.winfo_manager():
+            parts += [self._hint_prefix.cget("text"), self._hint_key.text]
+        parts.append(self.hint_label.cget("text"))
+        return " ".join(parts)
+
 
     def _render_hint(self):
+        for widget in (self._hint_prefix, self._hint_key, self.hint_label):
+            widget.pack_forget()
         if self._error_text:
             text = self._error_text
             if len(text) > MAX_MESSAGE_CHARS:
                 text = text[:MAX_MESSAGE_CHARS - 1] + "…"
             self.hint_label.configure(text=text, fg=theme.WARNING)
         elif self._hotkey:
-            self.hint_label.configure(text=f"Press {self._hotkey} from any window to start or stop", fg=theme.TEXT_MUTED)
+            self._hint_key.set_text(self._hotkey)
+            self._hint_prefix.pack(side="left")
+            self._hint_key.pack(side="left", padx=6)
+            self.hint_label.configure(text="from any window to start or stop", fg=theme.TEXT_MUTED)
         else:
             self.hint_label.configure(text="No hotkey set. Use Change to pick one", fg=theme.TEXT_MUTED)
+        self.hint_label.pack(side="left")
 
     def _on_save(self):
         self.controller.save_settings(force=True)

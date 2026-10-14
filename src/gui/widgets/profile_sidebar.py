@@ -23,7 +23,7 @@ class ProfileSummary:
 
     @property
     def subtitle(self) -> str:
-        return " · ".join((self.hotkey, self.mode, self.key, format_interval(self.interval)))
+        return " · ".join((self.mode, self.key, format_interval(self.interval)))
 
 
 def _is_inside(widget, container) -> bool:
@@ -40,13 +40,16 @@ class ProfileItem(tk.Frame):
 
         self._bar = tk.Frame(self, width=3, bg=theme.SIDEBAR)
         self._bar.pack(side="left", fill="y")
-        text_box = tk.Frame(self, bg=theme.SIDEBAR)
-        text_box.pack(side="left", fill="both", expand=True, padx=(12, 10), pady=9)
-        self._name = tk.Label(text_box, text=summary.name, font=theme.font(10, "bold"), anchor="w")
-        self._name.pack(fill="x")
-        self._sub = tk.Label(text_box, text=summary.subtitle, font=theme.font(8), anchor="w")
-        self._sub.pack(fill="x", pady=(2, 0))
-        self._text_box = text_box
+        self._text_box = tk.Frame(self, bg=theme.SIDEBAR)
+        self._text_box.pack(side="left", fill="both", expand=True, padx=(13, 10), pady=10)
+        self._top = tk.Frame(self._text_box, bg=theme.SIDEBAR)
+        self._top.pack(fill="x")
+        self._name = tk.Label(self._top, text=summary.name, font=theme.font(10, "bold"), anchor="w")
+        self._name.pack(side="left")
+        self._badge = tk.Label(self._top, text=summary.hotkey, font=theme.mono(8, "bold"), padx=6, pady=1, bd=0)
+        self._badge.pack(side="right")
+        self._sub = tk.Label(self._text_box, text=summary.subtitle, font=theme.font(8), anchor="w")
+        self._sub.pack(fill="x", pady=(3, 0))
 
         self._bind_tree(self)
         self._paint()
@@ -87,26 +90,31 @@ class ProfileItem(tk.Frame):
         if self.selected:
             bg, bar = theme.ACCENT_SOFT, theme.ACCENT
             name_fg, sub_fg = theme.TEXT, theme.TEXT_MUTED
+            badge_bg, badge_fg = theme.ACCENT_BADGE, theme.ACCENT_BADGE_TEXT
         elif self._hover:
             bg, bar = theme.SURFACE, theme.SIDEBAR
             name_fg, sub_fg = theme.TEXT, theme.TEXT_MUTED
+            badge_bg, badge_fg = theme.SURFACE_HOVER, theme.TEXT_SOFT
         else:
             bg, bar = theme.SIDEBAR, theme.SIDEBAR
             name_fg, sub_fg = theme.TEXT_SOFT, theme.TEXT_FAINT
-        self.configure(bg=bg)
+            badge_bg, badge_fg = theme.SURFACE_2, theme.TEXT_MUTED
+        for frame in (self, self._text_box, self._top):
+            frame.configure(bg=bg)
         self._bar.configure(bg=bar)
-        self._text_box.configure(bg=bg)
         self._name.configure(bg=bg, fg=name_fg)
         self._sub.configure(bg=bg, fg=sub_fg)
+        self._badge.configure(bg=badge_bg, fg=badge_fg)
 
 
 class ProfileSidebar(tk.Frame):
     WIDTH = 260
 
-    def __init__(self, parent, app_name: str, version: str,
+    def __init__(self, parent, app_name: str, version: str, logo=None,
                  on_select=None, on_add=None, on_rename=None, on_delete=None):
         super().__init__(parent, bg=theme.SIDEBAR, width=self.WIDTH)
         self.pack_propagate(False)
+        self._logo = logo
         self._on_select = on_select
         self._on_add = on_add
         self._on_rename = on_rename
@@ -136,6 +144,10 @@ class ProfileSidebar(tk.Frame):
     def active(self):
         return self._active
 
+    @property
+    def has_logo_image(self) -> bool:
+        return self._logo is not None
+
     def set_profiles(self, profiles, active=None) -> None:
         for item in self._items.values():
             item.destroy()
@@ -163,10 +175,13 @@ class ProfileSidebar(tk.Frame):
 
     def _build_header(self, app_name, version):
         header = tk.Frame(self, bg=theme.SIDEBAR)
-        header.pack(fill="x", padx=18, pady=(22, 18))
-        tk.Label(
-            header, text="H", font=theme.font(14, "bold"), fg="#FFFFFF", bg=theme.ACCENT, width=2, pady=3,
-        ).pack(side="left")
+        header.pack(fill="x", padx=20, pady=(24, 20))
+        if self._logo is not None:
+            tk.Label(header, image=self._logo, bg=theme.SIDEBAR, bd=0).pack(side="left")
+        else:
+            tk.Label(
+                header, text="H", font=theme.font(14, "bold"), fg=theme.ACCENT_TEXT, bg=theme.ACCENT, width=2, pady=3,
+            ).pack(side="left")
         titles = tk.Frame(header, bg=theme.SIDEBAR)
         titles.pack(side="left", padx=(12, 0))
         tk.Label(titles, text=app_name, font=theme.font(12, "bold"), fg=theme.TEXT, bg=theme.SIDEBAR, anchor="w").pack(fill="x")
@@ -174,7 +189,7 @@ class ProfileSidebar(tk.Frame):
 
     def _build_caption(self):
         caption = tk.Frame(self, bg=theme.SIDEBAR)
-        caption.pack(fill="x", padx=18, pady=(18, 8))
+        caption.pack(fill="x", padx=20, pady=(18, 8))
         tk.Label(
             caption, text="PROFILES", font=theme.font(8, "bold"), fg=theme.TEXT_MUTED, bg=theme.SIDEBAR,
         ).pack(side="left")
@@ -189,12 +204,12 @@ class ProfileSidebar(tk.Frame):
         footer.pack(side="bottom", fill="x")
         self._divider().pack(in_=footer, fill="x")
         buttons = tk.Frame(footer, bg=theme.SIDEBAR)
-        buttons.pack(fill="x", padx=18, pady=16)
+        buttons.pack(fill="x", padx=14, pady=12)
         buttons.grid_columnconfigure((0, 1), weight=1, uniform="footer")
-        self.rename_button = FlatButton(buttons, "Rename", command=self._handle_rename, variant="ghost", pady=6)
-        self.rename_button.grid(row=0, column=0, sticky="ew", padx=(0, 5))
-        self.delete_button = FlatButton(buttons, "Delete", command=self._handle_delete, variant="ghost_danger", pady=6)
-        self.delete_button.grid(row=0, column=1, sticky="ew", padx=(5, 0))
+        self.rename_button = FlatButton(buttons, "Rename", command=self._handle_rename, variant="quiet", pady=6)
+        self.rename_button.grid(row=0, column=0, sticky="ew", padx=(0, 3))
+        self.delete_button = FlatButton(buttons, "Delete", command=self._handle_delete, variant="quiet_danger", pady=6)
+        self.delete_button.grid(row=0, column=1, sticky="ew", padx=(3, 0))
 
     def _sync_footer(self):
         has_selection = self._active is not None
