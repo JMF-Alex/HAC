@@ -48,11 +48,11 @@ class SegmentedControl(tk.Frame):
         for option, segment in self._segments.items():
             if option == selected:
                 if self._enabled:
-                    bg, fg = theme.ACCENT, "#FFFFFF"
+                    bg, fg = theme.ACCENT, theme.ACCENT_TEXT
                 else:
                     bg, fg = theme.ACCENT_DISABLED, theme.ACCENT_DISABLED_TEXT
             elif not self._enabled:
-                bg, fg = theme.SURFACE_2, theme.TEXT_FAINT
+                bg, fg = theme.SURFACE_2, theme.TEXT_DISABLED
             elif option == self._hovered:
                 bg, fg = theme.SURFACE_HOVER, theme.TEXT
             else:
