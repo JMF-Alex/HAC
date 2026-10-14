@@ -10,12 +10,6 @@ logger = logging.getLogger(__name__)
 
 SETTING_KEYS = ("interval", "hotkey", "mode", "target_key")
 
-COLOR_RUNNING = "#4CAF50"
-COLOR_STOPPED = "#F44336"
-COLOR_ERROR = "#FF9800"
-COLOR_WAITING = "#FFC107"
-COLOR_IDLE_HINT = "#BBBBBB"
-
 
 class ClickerController:
     STATUS_POLL_MS = 200
@@ -35,8 +29,9 @@ class ClickerController:
 
 
     def bind_view(self, view):
-        """`view` must expose interval_entry, mode_var, key_var, hotkey_label,
-        status_label and set_inputs_enabled(bool)."""
+        """`view` must expose interval_entry, mode_var, key_var and the methods
+        show_status(kind, message), show_hotkey(hotkey), show_hotkey_waiting()
+        and set_inputs_enabled(enabled)."""
         self.view = view
         if not self.set_hotkey(self._initial_hotkey) and self._initial_hotkey != DEFAULT_HOTKEY:
             self.set_hotkey(DEFAULT_HOTKEY)
@@ -100,17 +95,13 @@ class ClickerController:
             self._hotkey_handle = None
 
     def update_hotkey_display(self):
-        if self.current_hotkey:
-            text = f"Hotkey: {self.current_hotkey} to start/stop"
-        else:
-            text = "No hotkey set - use Change Hotkey"
-        self.view.hotkey_label.config(text=text, foreground=COLOR_IDLE_HINT)
+        self.view.show_hotkey(self.current_hotkey)
 
     def change_hotkey(self):
         if self.hotkey_waiting:
             return
         self.hotkey_waiting = True
-        self.view.hotkey_label.config(text="Press a key...", foreground=COLOR_WAITING)
+        self.view.show_hotkey_waiting()
         captured = threading.Event()
 
         def on_key(event):
@@ -178,14 +169,12 @@ class ClickerController:
             return
         self._shown_status = state
 
-        label = self.view.status_label
         if running:
-            label.config(text="● Running", foreground=COLOR_RUNNING)
+            self.view.show_status("running")
         elif error:
-            text = f"● Error: {error}"
-            label.config(text=text if len(text) <= 46 else text[:45] + "…", foreground=COLOR_ERROR)
+            self.view.show_status("error", error)
         else:
-            label.config(text="● Stopped", foreground=COLOR_STOPPED)
+            self.view.show_status("stopped")
         self.view.set_inputs_enabled(not running)
 
 
