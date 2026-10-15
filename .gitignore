@@ -3,6 +3,7 @@ Scripts/
 Lib/
 Include/
 pyvenv.cfg
+.venv/
 
 # Build files
 dist/
