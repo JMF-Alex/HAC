@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class HACApp:
-    VERSION = "v0.6.4"
+    VERSION = "v0.7.0"
     WIDTH, HEIGHT = 900, 560
 
     def __init__(self):
@@ -33,7 +33,7 @@ class HACApp:
 
     def init_app(self):
         self.controller = ClickerController(self.root, self.clicker, self.config)
-        self.layout = LayoutManager(self.root, self.controller, self.config, self.VERSION)
+        self.layout = LayoutManager(self.root, self.controller, self.VERSION)
         self.controller.bind_view(self.layout)
 
         self.center_window()

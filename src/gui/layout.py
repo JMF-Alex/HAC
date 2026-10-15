@@ -4,6 +4,7 @@ import tkinter as tk
 from core.constants import KEY_CHOICES, MODES
 from core.paths import resource_path
 from gui import icon, theme
+from gui.widgets import dialogs
 from gui.widgets.buttons import FlatButton
 from gui.widgets.cards import Card
 from gui.widgets.comboboxes import FlatCombobox
@@ -19,12 +20,11 @@ LOGO_SIZE = 32
 
 class LayoutManager:
     APP_NAME = "HAutoClicker"
-    PROFILE_NAME = "Default"
 
-    def __init__(self, root, controller, config, version):
+    def __init__(self, root, controller, version):
         self.root = root
         self.controller = controller
-        self.config = config
+        self.settings = controller.active_settings
         self.version = version
         self._hotkey = None
         self._error_text = None
@@ -41,11 +41,13 @@ class LayoutManager:
         self.root.grid_rowconfigure(0, weight=1)
 
         self.logo = icon.load_icon_photo(resource_path("assets", "icon.ico"), LOGO_SIZE, master=self.root)
-        self.sidebar = ProfileSidebar(self.root, self.APP_NAME, self.version, logo=self.logo)
-        self.sidebar.grid(row=0, column=0, sticky="ns")
-        self.sidebar.set_profiles(
-            [ProfileSummary.from_config(self.PROFILE_NAME, self.config)], active=self.PROFILE_NAME
+        self.sidebar = ProfileSidebar(
+            self.root, self.APP_NAME, self.version, logo=self.logo,
+            on_select=self.controller.select_profile, on_add=self.controller.add_profile,
+            on_rename=self.controller.rename_profile, on_delete=self.controller.delete_profile,
         )
+        self.sidebar.grid(row=0, column=0, sticky="ns")
+        self.sidebar.set_profiles(self._summaries(self.controller.profiles), active=self.controller.active_name)
         tk.Frame(self.root, width=1, bg=theme.BORDER).grid(row=0, column=1, sticky="ns")
 
         main = tk.Frame(self.root, bg=theme.BG)
@@ -63,7 +65,7 @@ class LayoutManager:
         titles = tk.Frame(header, bg=theme.BG)
         titles.pack(side="left")
         self.title_label = tk.Label(
-            titles, text=self.PROFILE_NAME, font=theme.font(20, "bold"), fg=theme.TEXT, bg=theme.BG, anchor="w",
+            titles, text=self.controller.active_name, font=theme.font(20, "bold"), fg=theme.TEXT, bg=theme.BG, anchor="w",
         )
         self.title_label.pack(fill="x")
         tk.Label(
@@ -91,12 +93,11 @@ class LayoutManager:
             card.configure(height=128)
             card.pack_propagate(False)
 
-        # Interval
         interval_card = Card(grid, "Interval")
         row = tk.Frame(interval_card.body, bg=theme.SURFACE)
         row.pack(fill="x")
         self.interval_entry = FlatEntry(row, width=9)
-        self.interval_entry.insert(0, str(self.config["interval"]))
+        self.interval_entry.insert(0, str(self.settings["interval"]))
         self.interval_entry.configure(
             validate="key", validatecommand=(self.root.register(self._is_valid_interval), "%P"),
         )
@@ -106,14 +107,14 @@ class LayoutManager:
         place(interval_card, 0, 0)
 
         mode_card = Card(grid, "Mode")
-        self.mode_var = tk.StringVar(value=self.config["mode"])
+        self.mode_var = tk.StringVar(value=self.settings["mode"])
         self.mode_control = SegmentedControl(mode_card.body, list(MODES), self.mode_var)
         self.mode_control.pack(fill="x")
         mode_card.add_hint("Click repeats · Hold keeps it pressed")
         place(mode_card, 0, 1)
 
         key_card = Card(grid, "Key / button")
-        self.key_var = tk.StringVar(value=self.config["target_key"])
+        self.key_var = tk.StringVar(value=self.settings["target_key"])
         self.key_combo = FlatCombobox(key_card.body, KEY_CHOICES, self.key_var)
         self.key_combo.pack(fill="x")
         key_card.add_hint("Mouse buttons start with mouse_")
@@ -122,7 +123,7 @@ class LayoutManager:
         hotkey_card = Card(grid, "Hotkey")
         row = tk.Frame(hotkey_card.body, bg=theme.SURFACE)
         row.pack(fill="x")
-        self.hotkey_keycap = Keycap(row, self.config["hotkey"])
+        self.hotkey_keycap = Keycap(row, self.settings["hotkey"] or "-")
         self.hotkey_keycap.pack(side="left")
         self.change_hotkey_button = FlatButton(
             row, "Change", command=self.controller.change_hotkey, variant="ghost", pady=6,
@@ -164,6 +165,42 @@ class LayoutManager:
 
     def set_profile_title(self, name: str) -> None:
         self.title_label.configure(text=name)
+
+    def show_profile(self, name: str, settings: dict) -> None:
+        """Load a profile's settings into the form."""
+        self.set_profile_title(name)
+        entry = self.interval_entry
+        state = str(entry.cget("state"))
+        entry.configure(state="normal")
+        entry.delete(0, "end")
+        entry.insert(0, str(settings["interval"]))
+        entry.configure(state=state)
+        self.mode_var.set(settings["mode"])
+        self.key_var.set(settings["target_key"])
+        self.show_hotkey(settings["hotkey"])
+
+    def show_profiles(self, profiles: dict, active: str) -> None:
+        summaries = self._summaries(profiles)
+        self.root.after_idle(lambda: self.sidebar.set_profiles(summaries, active=active))
+
+    def ask_profile_name(self, title, initial, validate, confirm_text="Save"):
+        return dialogs.ask_name(self.root, title, "Profile name", initial, validate, confirm_text)
+
+    def confirm_delete(self, name: str) -> bool:
+        return dialogs.confirm(
+            self.root, "Delete profile", f"Delete \u201c{name}\u201d? This can't be undone.",
+            confirm_text="Delete", danger=True,
+        )
+
+    def show_message(self, title: str, message: str) -> None:
+        dialogs.confirm(self.root, title, message, cancel_text=None)
+
+    @staticmethod
+    def _summaries(profiles: dict) -> list:
+        return [
+            ProfileSummary(name, s["hotkey"] or "-", s["interval"], s["mode"], s["target_key"])
+            for name, s in profiles.items()
+        ]
 
     def set_inputs_enabled(self, enabled: bool) -> None:
         self.interval_entry.set_enabled(enabled)

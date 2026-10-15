@@ -17,21 +17,54 @@ from core.paths import user_data_dir
 
 logger = logging.getLogger(__name__)
 
-CONFIG_VERSION = 2
+CONFIG_VERSION = 3
 CONFIG_FILENAME = "config.json"
 LEGACY_CONFIG_PATH = os.path.join(os.path.expanduser("~"), "hac_config.json")
 
-DEFAULT_CONFIG = {
-    "version": CONFIG_VERSION,
-    "interval": DEFAULT_INTERVAL,
-    "hotkey": DEFAULT_HOTKEY,
-    "mode": MODE_CLICK,
-    "target_key": DEFAULT_TARGET_KEY,
-}
+DEFAULT_PROFILE_NAME = "Default"
+MAX_PROFILE_NAME = 24
+SETTING_KEYS = ("interval", "hotkey", "mode", "target_key")
+_HOTKEY_CANDIDATES = tuple(f"F{n}" for n in range(6, 13))
+
+
+def default_profile() -> dict:
+    return {
+        "interval": DEFAULT_INTERVAL,
+        "hotkey": DEFAULT_HOTKEY,
+        "mode": MODE_CLICK,
+        "target_key": DEFAULT_TARGET_KEY,
+    }
 
 
 def config_path() -> str:
     return os.path.join(user_data_dir(), CONFIG_FILENAME)
+
+
+def name_error(name: str, existing, ignore=None):
+    name = name.strip()
+    if not name:
+        return "Enter a name"
+    if len(name) > MAX_PROFILE_NAME:
+        return f"Use at most {MAX_PROFILE_NAME} characters"
+    taken = {n.lower() for n in existing if n != ignore}
+    if name.lower() in taken:
+        return "A profile with that name already exists"
+    return None
+
+
+def unique_name(base: str, existing) -> str:
+    taken = {n.lower() for n in existing}
+    if base.lower() not in taken:
+        return base
+    index = 2
+    while f"{base} {index}".lower() in taken:
+        index += 1
+    return f"{base} {index}"
+
+
+def suggest_hotkey(taken) -> str:
+    used = {h.lower() for h in taken if h}
+    return next((h for h in _HOTKEY_CANDIDATES if h.lower() not in used), "")
 
 
 def _read_json(path: str) -> dict:
@@ -44,20 +77,25 @@ def _read_json(path: str) -> dict:
 
 
 def _migrate(data: dict) -> dict:
-    """Bring configs written by older versions up to CONFIG_VERSION."""
     data = dict(data)
-    if data.get("version", 1) < 2:
+    version = data.get("version", 1)
+    if version < 2:
         key = data.get("target_key")
         if key in ("left", "right", "middle"):
             data["target_key"] = f"mouse_{key}"
         elif key in ("left_arrow", "right_arrow"):
             data["target_key"] = key.split("_")[0]
+    if version < 3:
+        data = {
+            "profiles": {DEFAULT_PROFILE_NAME: {k: data[k] for k in SETTING_KEYS if k in data}},
+            "active_profile": DEFAULT_PROFILE_NAME,
+        }
     data["version"] = CONFIG_VERSION
     return data
 
 
-def _sanitize(data: dict) -> dict:
-    cfg = dict(DEFAULT_CONFIG)
+def _sanitize_profile(data: dict) -> dict:
+    cfg = default_profile()
 
     interval = data.get("interval")
     if isinstance(interval, (int, float)) and not isinstance(interval, bool) and math.isfinite(interval):
@@ -67,13 +105,43 @@ def _sanitize(data: dict) -> dict:
         cfg["mode"] = data["mode"]
 
     hotkey = data.get("hotkey")
-    if isinstance(hotkey, str) and hotkey.strip():
+    if isinstance(hotkey, str):
         cfg["hotkey"] = hotkey.strip()
 
     if data.get("target_key") in KEY_CHOICES:
         cfg["target_key"] = data["target_key"]
 
     return cfg
+
+
+def _sanitize(data: dict) -> dict:
+    profiles = {}
+    seen_names, used_hotkeys = set(), set()
+
+    raw = data.get("profiles")
+    if isinstance(raw, dict):
+        for name, settings in raw.items():
+            if not isinstance(name, str) or not isinstance(settings, dict):
+                continue
+            name = name.strip()[:MAX_PROFILE_NAME].strip()
+            if not name or name.lower() in seen_names:
+                continue
+            profile = _sanitize_profile(settings)
+            hotkey = profile["hotkey"].lower()
+            if hotkey and hotkey in used_hotkeys:
+                profile["hotkey"] = ""
+            elif hotkey:
+                used_hotkeys.add(hotkey)
+            seen_names.add(name.lower())
+            profiles[name] = profile
+
+    if not profiles:
+        profiles[DEFAULT_PROFILE_NAME] = default_profile()
+
+    active = data.get("active_profile")
+    if active not in profiles:
+        active = next(iter(profiles))
+    return {"version": CONFIG_VERSION, "active_profile": active, "profiles": profiles}
 
 
 def load_config() -> dict:
@@ -88,8 +156,8 @@ def load_config() -> dict:
     return _sanitize(_migrate(data))
 
 
-def save_config(partial: dict) -> dict:
-    config = _sanitize({**load_config(), **partial})
+def save_config(config: dict) -> dict:
+    config = _sanitize(config)
     path = config_path()
     tmp = path + ".tmp"
     try:
