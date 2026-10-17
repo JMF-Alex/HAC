@@ -6,12 +6,17 @@ on:
     tags: ["**"]
   pull_request:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to build and attach to its release. Leave empty to only build."
+        required: false
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.ref }}-${{ inputs.tag }}
   cancel-in-progress: true
 
 jobs:
@@ -25,6 +30,8 @@ jobs:
         python-version: ["3.11", "3.13"]
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - uses: actions/setup-python@v5
         with:
@@ -52,6 +59,8 @@ jobs:
             asset: HAC_Autoclicker-linux.tar.gz
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - uses: actions/setup-python@v5
         with:
@@ -92,7 +101,7 @@ jobs:
 
   release:
     name: Publish release
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.ref_type == 'tag' || inputs.tag != ''
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -105,5 +114,6 @@ jobs:
 
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ inputs.tag || github.ref_name }}
           files: dist/*
           generate_release_notes: true
