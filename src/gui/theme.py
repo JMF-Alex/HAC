@@ -1,3 +1,4 @@
+from tkinter import font as tkfont
 from tkinter import ttk
 
 BG = "#0E1014"
@@ -7,18 +8,15 @@ SURFACE_2 = "#1E232C"
 SURFACE_HOVER = "#262C38"
 SURFACE_DISABLED = "#14171D"
 
-# Lines
 BORDER = "#262C37"
 BORDER_STRONG = "#343B49"
 
-# Text 
 TEXT = "#E8EAF0"
 TEXT_SOFT = "#C9CDD6"
 TEXT_MUTED = "#8B93A3"
 TEXT_FAINT = "#7F8898"
 TEXT_DISABLED = "#4D5462"
 
-# Accent
 ACCENT = "#14C8B0"
 ACCENT_HOVER = "#33D8C2"
 ACCENT_ACTIVE = "#0FAE9A"
@@ -29,7 +27,6 @@ ACCENT_BADGE_TEXT = "#7CE8D8"
 ACCENT_DISABLED = "#1D4A47"
 ACCENT_DISABLED_TEXT = "#7FB9B3"
 
-# Danger / warning
 DANGER = "#E5484D"
 DANGER_HOVER = "#F05A5F"
 DANGER_ACTIVE = "#CC3D42"
@@ -38,7 +35,6 @@ DANGER_TEXT = "#F2777B"
 WARNING = "#F5A524"
 WARNING_EDGE = "#7A5410"
 
-# Status badge tints
 RUNNING_BG = "#0F2B28"
 RUNNING_BORDER = "#195249"
 RUNNING_TEXT = "#6EE7D6"
@@ -46,7 +42,6 @@ ERROR_BG = "#2A2010"
 ERROR_BORDER = "#5A4116"
 ERROR_TEXT = "#FBC15E"
 
-# Keycap
 KEY_FACE = "#262C38"
 KEY_EDGE = "#07080B"
 
@@ -62,7 +57,23 @@ def mono(size: int = 11, weight: str = "bold"):
     return (MONO_FAMILY, size, weight)
 
 
+def _pick_font(installed, candidates, fallback):
+    return next((installed[c.lower()] for c in candidates if c.lower() in installed), fallback)
+
+
+def _resolve_fonts(root) -> None:
+    global FONT_FAMILY, MONO_FAMILY
+    installed = {name.lower(): name for name in tkfont.families(root)}
+    FONT_FAMILY = _pick_font(
+        installed, (FONT_FAMILY, "Inter", "Ubuntu", "Cantarell", "Noto Sans", "DejaVu Sans"), "Helvetica",
+    )
+    MONO_FAMILY = _pick_font(
+        installed, (MONO_FAMILY, "DejaVu Sans Mono", "Ubuntu Mono", "Liberation Mono", "Noto Sans Mono"), "Courier",
+    )
+
+
 def apply_ttk_styles(root) -> None:
+    _resolve_fonts(root)
     style = ttk.Style(root)
     style.theme_use("clam")
     style.configure(

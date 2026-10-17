@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class HACApp:
-    VERSION = "v0.7.0"
+    VERSION = "v0.7.1"
     WIDTH, HEIGHT = 900, 560
 
     def __init__(self):
@@ -57,7 +57,11 @@ class HACApp:
         try:
             self.root.iconbitmap(resource_path("assets", "icon.ico"))
         except tk.TclError:
-            logger.warning("Window icon not found or unsupported on this platform")
+            logo = getattr(self.layout, "logo", None)
+            if logo is not None:
+                self.root.iconphoto(True, logo)
+            else:
+                logger.warning("Window icon not found or unsupported on this platform")
 
     @staticmethod
     def _log_tk_exception(exc_type, exc, tb):

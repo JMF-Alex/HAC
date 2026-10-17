@@ -1,7 +1,7 @@
 import logging
 import threading
 
-import keyboard
+from core import hotkeys
 
 from core.config import (
     CONFIG_VERSION,
@@ -204,7 +204,7 @@ class ClickerController:
         if hotkey in self._hotkey_handles:
             return True
         try:
-            handle = keyboard.add_hotkey(hotkey, self._on_hotkey, args=(hotkey,))
+            handle = hotkeys.add_hotkey(hotkey, self._on_hotkey, args=(hotkey,))
         except (ValueError, KeyError):
             logger.exception("Invalid hotkey %r", hotkey)
             self._error = f"Invalid hotkey: {hotkey}"
@@ -217,7 +217,7 @@ class ClickerController:
         if handle is None:
             return
         try:
-            keyboard.remove_hotkey(handle)
+            hotkeys.remove_hotkey(handle)
         except (KeyError, ValueError):
             pass
 
@@ -232,14 +232,14 @@ class ClickerController:
             if event.event_type != "down" or captured.is_set():
                 return
             captured.set()
-            keyboard.unhook(on_key)
+            hotkeys.unhook(on_key)
             new_key = event.name.upper()
             try:
                 self.root.after(0, lambda: self._apply_new_hotkey(new_key))
             except RuntimeError:
                 pass
 
-        keyboard.hook(on_key)
+        hotkeys.hook(on_key)
 
     def _apply_new_hotkey(self, new_key):
         self.hotkey_waiting = False
@@ -326,6 +326,6 @@ class ClickerController:
         for hotkey in list(self._hotkey_handles):
             self._release_hotkey(hotkey)
         try:
-            keyboard.unhook_all()
+            hotkeys.unhook_all()
         except Exception:
             logger.exception("Could not unhook keyboard")
