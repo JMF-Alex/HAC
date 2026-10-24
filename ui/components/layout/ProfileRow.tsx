@@ -55,7 +55,7 @@ export function ProfileRow({
         </span>
         <Kbd className="transition group-focus-within:opacity-0 group-hover:opacity-0">{profile.hotkey || "—"}</Kbd>
       </button>
-      <div className="absolute inset-y-0 right-1.5 flex items-center gap-0.5 transition group-focus-within:opacity-100 group-hover:opacity-100">
+      <div className="absolute inset-y-0 right-1.5 flex items-center gap-0.5 opacity-0 pointer-events-none transition group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100">
         <IconButton icon={Pencil} label="Rename" onClick={() => onRename(name)} />
         <IconButton icon={Copy} label="Duplicate" onClick={() => api.duplicateProfile(name)} />
         <IconButton icon={Trash2} label="Delete" danger onClick={() => onDelete(name)} />
