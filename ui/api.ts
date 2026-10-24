@@ -63,10 +63,13 @@ export function useAppState() {
       listen<Config>("config", (e) => setConfig(e.payload)),
       listen<Status>("status", (e) => setStatus(e.payload)),
     ];
-    invoke<{ config: Config; status: Status }>("get_state").then((s) => {
-      setConfig(s.config);
-      setStatus(s.status);
-    });
+    // only read the state once both listeners are attached, so no change can slip in between
+    Promise.all(unlisten)
+      .then(() => invoke<{ config: Config; status: Status }>("get_state"))
+      .then((s) => {
+        setConfig(s.config);
+        setStatus(s.status);
+      });
     return () => unlisten.forEach((p) => p.then((off) => off()));
   }, []);
   return { config, status };
@@ -74,9 +77,11 @@ export function useAppState() {
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
+const KEY_LABELS: Record<string, string> = { up: "Up arrow", down: "Down arrow", left: "Left arrow", right: "Right arrow" };
+
 export function keyLabel(key: string) {
   if (key.startsWith("mouse_")) return `${capitalize(key.slice(6))} mouse`;
-  return key.length === 1 ? key.toUpperCase() : capitalize(key);
+  return KEY_LABELS[key] ?? (key.length === 1 ? key.toUpperCase() : capitalize(key));
 }
 
 const g = (n: number) => String(Number(n.toPrecision(6)));

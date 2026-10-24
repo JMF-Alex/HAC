@@ -8,10 +8,13 @@ pub const MAX_LIMIT_VALUE: f64 = 1_000_000.0;
 pub const MAX_START_DELAY: f64 = 60.0;
 
 pub const MOUSE_KEYS: [&str; 3] = ["mouse_left", "mouse_right", "mouse_middle"];
-const SPECIAL_KEYS: [&str; 10] = ["space", "shift", "ctrl", "alt", "enter", "tab", "up", "down", "left", "right"];
+const SPECIAL_KEYS: [&str; 12] = ["space", "shift", "ctrl", "alt", "enter", "tab", "esc", "backspace", "up", "down", "left", "right"];
+
+/// a single lowercase letter or digit
+pub fn is_char_key(key: &str) -> bool {
+    matches!(key.as_bytes(), [b'a'..=b'z' | b'0'..=b'9'])
+}
 
 pub fn is_key_choice(key: &str) -> bool {
-    MOUSE_KEYS.contains(&key)
-        || SPECIAL_KEYS.contains(&key)
-        || (key.len() == 1 && key.as_bytes()[0].is_ascii_lowercase())
+    MOUSE_KEYS.contains(&key) || SPECIAL_KEYS.contains(&key) || is_char_key(key)
 }

@@ -34,7 +34,7 @@ This is the Rust rewrite of the original Python HAC. It reads the same settings 
 
 - **Two modes**: *Click* repeats the key or button at your interval, *Hold* keeps it pressed until you stop.
 - **Flexible intervals**: from 1 ms up to one hour, typed in milliseconds or seconds, with one-click presets and optional random variation.
-- **Visual pickers**: choose the target on a drawn mouse (left, middle or right button) or a keyboard (letters, `Space`, `Shift`, `Ctrl`, `Alt`, `Enter`, `Tab` and the arrows).
+- **Visual pickers**: choose the target on a drawn mouse (left, middle or right button) or a keyboard (letters, digits, `Space`, `Shift`, `Ctrl`, `Alt`, `Enter`, `Tab`, `Esc`, `Backspace` and the arrows).
 - **Live session stats**: click counter, clicks per second, elapsed time and a progress bar towards the stop limit.
 - **Profiles**: create, rename, duplicate and delete profiles. Each one has its own settings and its own global hotkey.
 - **Global hotkeys**: `F6` by default, work from any window. Pressing another profile's hotkey switches to it and starts it.
@@ -145,7 +145,7 @@ HAC stores its settings in `%APPDATA%\HAutoClicker\config.json`. Set the `HAC_CO
 | `interval`    | Seconds between clicks                     | `0.001` to `3600`                                                      |
 | `hotkey`      | Key that starts and stops this profile     | A key name, for example `F6`, or empty for none                        |
 | `mode`        | How the key or button is pressed           | `Click` or `Hold`                                                      |
-| `target_key`  | What is pressed                            | `mouse_left`, `mouse_right`, `mouse_middle`, `a` to `z`, `space`, `shift`, `ctrl`, `alt`, `enter`, `tab`, `up`, `down`, `left`, `right` |
+| `target_key`  | What is pressed                            | `mouse_left`, `mouse_right`, `mouse_middle`, `a` to `z`, `0` to `9`, `space`, `shift`, `ctrl`, `alt`, `enter`, `tab`, `esc`, `backspace`, `up`, `down`, `left`, `right` |
 | `jitter`      | Random variation of each delay, in percent | `0` to `100`                                                           |
 | `limit_kind`  | When to stop on its own                    | `Never`, `Clicks` or `Time`                                            |
 | `limit_value` | Clicks or seconds for the limit            | `1` to `1000000`                                                       |
@@ -180,10 +180,11 @@ The Rust tests live next to the code they test, in a `#[cfg(test)] mod tests` bl
 hac/
 ├── src/                         Rust backend
 │   ├── main.rs                  Entry point: registers the commands and starts the app
+│   ├── lib.rs                   Library root, so the tests in tests/ can use the code
 │   ├── app/                     Ties the clicker, config, hotkeys and window together
 │   │   ├── mod.rs               Controller: app state, status line, fail-safe loop
 │   │   ├── commands.rs          The commands the window calls
-│   │   └── format.rs            Status-line text (durations, click counts)
+│   │   └── format.rs            Status-line text (click counts)
 │   ├── core/                    Everything that works without Windows
 │   │   ├── constants.rs         Limits and choices shared by the app
 │   │   ├── engine/              Clicker thread and fail-safe corner check
@@ -191,7 +192,8 @@ hac/
 │   └── platform/                Windows access
 │       ├── hotkeys.rs           Global hotkeys through Raw Input
 │       ├── input.rs             Simulated clicks and key presses (SendInput)
-│       └── system.rs            Pointer position, beep and timer resolution
+│       └── system.rs            Pointer position and beep
+├── tests/                       Rust tests, mirroring src/ (listed as [[test]] in Cargo.toml)
 ├── ui/                          React + Tailwind CSS 4 frontend
 │   ├── main.tsx, App.tsx        Entry point and window layout
 │   ├── api.ts                   Typed calls to the Rust side and live state

@@ -36,33 +36,35 @@ export default function App() {
   const openSettings = () => setDialog({ kind: "settings" });
 
   return (
-    <div className="flex h-full">
-      <Sidebar
-        config={config}
-        version={version}
-        running={running}
-        onAdd={() => setDialog({ kind: "add" })}
-        onSettings={openSettings}
-        onRename={(name) => setDialog({ kind: "rename", name })}
-        onDelete={(name) =>
-          setDialog(
-            names.length === 1
-              ? { kind: "message", title: "Can't delete this profile", text: "You need at least one profile." }
-              : { kind: "delete", name },
-          )
-        }
-      />
+    <>
+      <div className="flex h-full" inert={dialog !== null}>
+        <Sidebar
+          config={config}
+          version={version}
+          running={running}
+          onAdd={() => setDialog({ kind: "add" })}
+          onSettings={openSettings}
+          onRename={(name) => setDialog({ kind: "rename", name })}
+          onDelete={(name) =>
+            setDialog(
+              names.length === 1
+                ? { kind: "message", title: "Can't delete this profile", text: "You need at least one profile." }
+                : { kind: "delete", name },
+            )
+          }
+        />
 
-      <main className="flex min-w-0 flex-1 flex-col bg-[radial-gradient(ellipse_at_top,rgb(139_92_246/0.07),transparent_60%)]">
-        <TopBar name={active} profile={profile} status={status} failsafe={config.settings.failsafe} onOpenSettings={openSettings} />
-        <div className="flex-1 space-y-4 overflow-x-hidden overflow-y-auto px-6 py-5">
-          <Telemetry profile={profile} status={status} />
-          {/* remount per profile so local view state (mouse/keyboard, ms/s) follows the profile */}
-          <div key={active} className="animate-fade">
-            <ProfileView profile={profile} status={status} />
+        <main className="flex min-w-0 flex-1 flex-col bg-[radial-gradient(ellipse_at_top,rgb(139_92_246/0.07),transparent_60%)]">
+          <TopBar name={active} profile={profile} status={status} failsafe={config.settings.failsafe} onOpenSettings={openSettings} />
+          <div className="flex-1 space-y-4 overflow-x-hidden overflow-y-auto px-6 py-5">
+            <Telemetry profile={profile} status={status} />
+            {/* remount per profile so local view state (mouse/keyboard, ms/s) follows the profile */}
+            <div key={active} className="animate-fade">
+              <ProfileView profile={profile} status={status} />
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
 
       {dialog?.kind === "add" && (
         <NameDialog title="New profile" initial={uniqueName("Profile", names)} confirm="Create profile" onSubmit={api.addProfile} onClose={close} />
@@ -90,6 +92,6 @@ export default function App() {
       )}
       {dialog?.kind === "settings" && <SettingsDialog settings={config.settings} onClose={close} />}
       {dialog?.kind === "message" && <ConfirmDialog title={dialog.title} message={dialog.text} onClose={close} />}
-    </div>
+    </>
   );
 }

@@ -33,6 +33,8 @@ export function NameDialog({
         <input
           autoFocus
           aria-label="Profile name"
+          maxLength={24}
+          spellCheck={false}
           value={value}
           onFocus={(e) => e.target.select()}
           onChange={(e) => {
@@ -40,8 +42,8 @@ export function NameDialog({
             setError("");
           }}
           className={cx(
-            "h-10 w-full rounded-lg bg-zinc-950/60 px-3 text-sm ring-1 outline-none select-text ring-inset focus:ring-2",
-            error ? "ring-rose-500/70 focus:ring-rose-500" : "ring-white/10 focus:ring-violet-500",
+            "h-10 w-full rounded-lg bg-zinc-950/60 px-3 text-sm ring-1 outline-none select-text ring-inset",
+            error ? "ring-rose-500/70" : "ring-white/10",
           )}
         />
         <p className="mt-2 h-4 text-xs text-rose-400">{error}</p>

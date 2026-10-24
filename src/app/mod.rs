@@ -1,18 +1,19 @@
 pub mod commands;
-mod format;
+pub mod format;
 
 use crate::core::engine::clicker::Clicker;
 use crate::core::engine::failsafe::corner_hit;
-use crate::core::storage::config::{self, Config, Failsafe, Mode};
+use crate::core::storage::config::{self, Config, Failsafe};
 use crate::platform::{hotkeys, input, system};
-use format::{clicks_text, format_duration};
+use format::clicks_text;
 use serde::Serialize;
 use std::sync::{Mutex, MutexGuard};
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter, Manager};
 
 const MONITOR_INTERVAL: Duration = Duration::from_millis(50);
+const SAVE_DELAY: Duration = Duration::from_millis(400);
 
 #[derive(Serialize, Clone, PartialEq, Debug)]
 pub struct Status {
@@ -33,7 +34,8 @@ pub struct Snapshot {
 
 struct Inner {
     config: Config,
-    last_saved: Config,
+    shown_config: Config,
+    unsaved_since: Option<Instant>,
     error: Option<String>,
     note: Option<String>,
     capturing: bool,
@@ -66,7 +68,8 @@ impl Controller {
         }
         let controller = Controller {
             inner: Mutex::new(Inner {
-                last_saved: config.clone(),
+                shown_config: config.clone(),
+                unsaved_since: None,
                 config,
                 error,
                 note: None,
@@ -94,32 +97,25 @@ impl Controller {
     }
 
     fn commit(&self, inner: &mut Inner) {
-        if inner.config != inner.last_saved {
-            inner.config = config::save(&inner.config);
-            inner.last_saved = inner.config.clone();
+        if inner.config != inner.shown_config {
+            let _ = self.app.emit("config", &inner.config);
+            inner.shown_config = inner.config.clone();
+            inner.unsaved_since = Some(Instant::now());
         }
-        let _ = self.app.emit("config", &inner.config);
         self.refresh(inner);
+    }
+
+    fn save(inner: &mut Inner) {
+        if inner.unsaved_since.take().is_some() {
+            config::save(&inner.config);
+        }
     }
 
     fn status(&self, inner: &Inner) -> Status {
         let c = &self.clicker;
-        let running = c.is_clicking();
-        let waiting = running && c.is_waiting();
-        let (kind, message) = if running {
-            let live = if waiting {
-                format!("Starting in {:.1} s", c.delay_remaining())
-            } else if c.mode() == Some(Mode::Hold) {
-                format!("Holding for {}", format_duration(c.elapsed()))
-            } else {
-                let (clicks, elapsed) = (c.click_count(), c.elapsed());
-                let mut text = clicks_text(clicks);
-                if clicks > 1 && elapsed >= 1.0 {
-                    text += &format!(" · {:.1}/s", clicks as f64 / elapsed);
-                }
-                text
-            };
-            (if waiting { "waiting" } else { "running" }, Some(live))
+        // the window shows live numbers from the fields below, so a run carries no message
+        let (kind, message) = if c.is_clicking() {
+            (if c.is_waiting() { "waiting" } else { "running" }, None)
         } else if let Some(error) = &inner.error {
             ("error", Some(error.clone()))
         } else if let Some(note) = &inner.note {
@@ -138,7 +134,7 @@ impl Controller {
         Status {
             kind,
             message,
-            locked: running,
+            locked: kind == "running" || kind == "waiting",
             capturing: inner.capturing,
             clicks: c.click_count(),
             // tenths are enough for the screen and keep identical statuses from being re-sent
@@ -199,6 +195,9 @@ impl Controller {
             self.clicker.stop();
             inner.note = Some(format!("Stopped · mouse reached the {} corner", corner.label()));
         }
+        if inner.unsaved_since.is_some_and(|since| since.elapsed() >= SAVE_DELAY) {
+            Self::save(&mut inner);
+        }
         self.refresh(&mut inner);
     }
 
@@ -241,10 +240,7 @@ impl Controller {
 
     pub fn shutdown(&self) {
         self.clicker.stop();
-        let inner = self.lock();
-        if inner.config != inner.last_saved {
-            config::save(&inner.config);
-        }
+        Self::save(&mut self.lock());
     }
 }
 

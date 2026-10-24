@@ -15,3 +15,28 @@ tauri-build = { version = "2.7.4", features = [] }
 
 [target."cfg(windows)".dependencies]
 windows = { version = "0.62", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging", "Win32_UI_Input", "Win32_UI_Input_KeyboardAndMouse", "Win32_Media", "Win32_System_LibraryLoader", "Win32_System_Diagnostics_Debug"] }
+
+# tests/ mirrors src/; Cargo only finds top-level files in tests/ by itself, so each one is listed here
+[[test]]
+name = "app_format"
+path = "tests/app/format.rs"
+
+[[test]]
+name = "core_constants"
+path = "tests/core/constants.rs"
+
+[[test]]
+name = "core_engine_clicker"
+path = "tests/core/engine/clicker.rs"
+
+[[test]]
+name = "core_engine_failsafe"
+path = "tests/core/engine/failsafe.rs"
+
+[[test]]
+name = "core_storage_config"
+path = "tests/core/storage/config.rs"
+
+[[test]]
+name = "core_storage_profiles"
+path = "tests/core/storage/profiles.rs"

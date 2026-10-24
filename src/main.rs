@@ -1,16 +1,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-#[cfg(not(windows))]
-compile_error!("HAC only supports Windows for now");
-
-mod app;
-mod core;
-mod platform;
-
+use hac::app;
 use tauri::Manager;
 
 fn main() {
-    platform::system::begin_timer_resolution();
     tauri::Builder::default()
         .setup(|app| {
             app.manage(app::Controller::new(app.handle().clone()));
@@ -36,7 +29,6 @@ fn main() {
             // releases a held key and flushes the config before the process ends
             if let tauri::RunEvent::Exit = event {
                 app.state::<app::Controller>().shutdown();
-                platform::system::end_timer_resolution();
             }
         });
 }

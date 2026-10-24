@@ -29,7 +29,7 @@ export function Modal({
       className="fixed inset-0 z-50 grid animate-fade place-items-center bg-black/60 backdrop-blur-sm"
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div role="dialog" aria-label={title} className={cx("w-104 animate-pop rounded-2xl bg-zinc-900 p-5 shadow-2xl ring-1 ring-white/10", className)}>
+      <div role="dialog" aria-modal aria-label={title} className={cx("w-104 animate-pop rounded-2xl bg-zinc-900 p-5 shadow-2xl ring-1 ring-white/10", className)}>
         <div className="mb-4 flex gap-3">
           {Icon && (
             <span

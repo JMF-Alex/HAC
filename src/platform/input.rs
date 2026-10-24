@@ -1,4 +1,6 @@
+use crate::core::constants::is_char_key;
 use crate::core::engine::clicker::Input;
+use windows::Win32::Media::{timeBeginPeriod, timeEndPeriod};
 use windows::Win32::UI::Input::KeyboardAndMouse::*;
 
 enum Target {
@@ -37,6 +39,13 @@ impl SendInputDevice {
     }
 }
 
+// the 1 ms timer resolution is only held while a run owns an input, so an idle app costs nothing
+impl Drop for SendInputDevice {
+    fn drop(&mut self) {
+        unsafe { timeEndPeriod(1) };
+    }
+}
+
 impl Input for SendInputDevice {
     fn press(&mut self) {
         self.event(true);
@@ -57,14 +66,16 @@ pub fn input_for(key: &str) -> Result<Box<dyn Input>, String> {
         "alt" => Target::Key(VK_MENU, false),
         "enter" => Target::Key(VK_RETURN, false),
         "tab" => Target::Key(VK_TAB, false),
+        "esc" => Target::Key(VK_ESCAPE, false),
+        "backspace" => Target::Key(VK_BACK, false),
         "up" => Target::Key(VK_UP, true),
         "down" => Target::Key(VK_DOWN, true),
         "left" => Target::Key(VK_LEFT, true),
         "right" => Target::Key(VK_RIGHT, true),
-        k if k.len() == 1 && k.as_bytes()[0].is_ascii_lowercase() => {
-            Target::Key(VIRTUAL_KEY(k.as_bytes()[0].to_ascii_uppercase() as u16), false)
-        }
+        // a letter's or digit's virtual key code is its uppercase ASCII code
+        k if is_char_key(k) => Target::Key(VIRTUAL_KEY(k.as_bytes()[0].to_ascii_uppercase() as u16), false),
         _ => return Err(format!("Unknown key: {key}")),
     };
+    unsafe { timeBeginPeriod(1) };
     Ok(Box::new(SendInputDevice(target)))
 }
