@@ -72,8 +72,12 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
+      # MSI rejects non-numeric pre-release tags (e.g. -rc-1), so give WiX the bare x.y.z
       - name: Build
-        run: pnpm tauri build
+        shell: bash
+        run: |
+          v=$(node -p "require('./tauri.conf.json').version")
+          pnpm tauri build --config "{\"bundle\":{\"windows\":{\"wix\":{\"version\":\"${v%%-*}\"}}}}"
 
       - name: Package
         shell: bash
