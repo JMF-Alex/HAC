@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing tag to build and attach to its release. Leave empty to only build."
+        description: "Existing tag to build and attach to its release. Leave empty to only run tests."
         required: false
         type: string
 
@@ -51,6 +51,8 @@ jobs:
 
   build:
     name: Build (windows)
+    # only build when publishing a release
+    if: github.ref_type == 'tag' || inputs.tag != ''
     needs: test
     runs-on: windows-latest
     steps:
@@ -94,7 +96,6 @@ jobs:
 
   release:
     name: Publish release
-    if: github.ref_type == 'tag' || inputs.tag != ''
     needs: build
     runs-on: ubuntu-latest
     permissions:
