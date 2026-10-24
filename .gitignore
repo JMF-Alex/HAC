@@ -1,0 +1,19 @@
+/target
+/gen/schemas
+/node_modules
+/dist
+
+# Logs / caches
+*.log
+*.tsbuildinfo
+.vite/
+
+# Env & secrets (e.g. Tauri updater signing keys)
+.env
+.env.*
+*.key
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+.vscode/

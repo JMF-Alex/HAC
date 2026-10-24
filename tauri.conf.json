@@ -1,0 +1,35 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "hac",
+  "version": "1.0.0-rc-1",
+  "identifier": "jmf.alex.hac",
+  "build": {
+    "devUrl": "http://localhost:5173",
+    "frontendDist": "dist",
+    "beforeDevCommand": "pnpm dev",
+    "beforeBuildCommand": "pnpm build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "HAutoClicker",
+        "width": 1100,
+        "height": 820,
+        "resizable": true,
+        "maximizable": true,
+        "center": true,
+        "theme": "Dark",
+        "backgroundColor": "#09090b",
+        "minWidth": 1000,
+        "minHeight": 680
+      }
+    ]
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/icon.ico"
+    ]
+  }
+}
