@@ -1,5 +1,5 @@
-#[cfg(not(windows))]
-compile_error!("HAC only supports Windows for now");
+#[cfg(not(any(windows, target_os = "linux")))]
+compile_error!("HAC only supports Windows and Linux for now");
 
 pub mod app;
 pub mod core;

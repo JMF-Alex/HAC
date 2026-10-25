@@ -1,6 +1,6 @@
 # HAutoClicker (HAC)
 
-A fast, lightweight autoclicker for Windows, built with Rust and Tauri. Pick a mouse button or a key, set the interval, and start or stop from any window with a single hotkey.
+A fast, lightweight autoclicker for Windows and Linux, built with Rust and Tauri. Pick a mouse button or a key, set the interval, and start or stop from any window with a single hotkey.
 
 This is the Rust rewrite of the original Python HAC. It reads the same settings file, so your existing profiles carry over.
 
@@ -10,7 +10,7 @@ This is the Rust rewrite of the original Python HAC. It reads the same settings 
 ![Rust](https://img.shields.io/badge/Rust-000000?style=flat-square&logo=rust&logoColor=white)
 ![Tauri](https://img.shields.io/badge/Tauri_2-24C8D8?style=flat-square&logo=tauri&logoColor=white)
 ![React](https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB)
-![Platform](https://img.shields.io/badge/Platform-Windows-0078D4?style=flat-square)
+![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-0078D4?style=flat-square)
 
 ![HAutoClicker main window](docs/images/main.png)
 
@@ -42,15 +42,16 @@ This is the Rust rewrite of the original Python HAC. It reads the same settings 
 - **Fail-safe corner**: pick a corner on the screen drawing; moving the mouse into it stops clicking at once.
 - **Settings that stick**: every change is saved right away and restored on the next launch.
 - **Safe by design**: settings are locked while clicking, a held key is released when you close the app, and keys sent by other programs never trigger your hotkey.
-- **Small and native**: a single `.exe` of about 9 MB, using the WebView2 runtime that ships with Windows.
+- **Small and native**: a single `.exe` of about 9 MB, using the WebView2 runtime that ships with Windows. On Linux it uses the system WebKitGTK.
 
 ## Getting Started
 
 ### Prerequisites
 
 - Windows 10 or 11 with the [WebView2 runtime](https://developer.microsoft.com/microsoft-edge/webview2/) (already installed on Windows 11 and up-to-date Windows 10).
-- [Rust](https://rustup.rs/) (stable, MSVC toolchain).
-- [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) with the **Desktop development with C++** workload.
+- Or Linux with an **X11** session (Wayland blocks global hotkeys and simulated input between apps) and the [Tauri system packages](https://v2.tauri.app/start/prerequisites/#linux), e.g. on Debian/Ubuntu: `sudo apt install libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libssl-dev`.
+- [Rust](https://rustup.rs/) (stable; MSVC toolchain on Windows).
+- [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) with the **Desktop development with C++** workload. (Windows only)
 - [Node.js 20+](https://nodejs.org/) and [pnpm](https://pnpm.io/installation).
 
 ### Installation
@@ -159,6 +160,7 @@ Invalid or missing values fall back to the defaults, and a corrupted file never 
 ```bash
 pnpm tauri build --no-bundle   # a single target/release/hac.exe
 pnpm tauri build               # also builds .msi and setup .exe installers in target/release/bundle/
+                               # on Linux: hac plus .deb, .rpm and .AppImage
 ```
 
 The plain `hac.exe` runs with a double click and needs no installation. The installers add a Start menu entry and an uninstaller, and install WebView2 if it is missing.
@@ -185,11 +187,11 @@ hac/
 │   │   ├── mod.rs               Controller: app state, status line, fail-safe loop
 │   │   ├── commands.rs          The commands the window calls
 │   │   └── format.rs            Status-line text (click counts)
-│   ├── core/                    Everything that works without Windows
+│   ├── core/                    Everything that works without the OS
 │   │   ├── constants.rs         Limits and choices shared by the app
 │   │   ├── engine/              Clicker thread and fail-safe corner check
 │   │   └── storage/             Config file, profile names and app folders
-│   └── platform/                Windows access
+│   └── platform/                OS access (Windows, linux/ for X11)
 │       ├── hotkeys.rs           Global hotkeys through Raw Input
 │       ├── input.rs             Simulated clicks and key presses (SendInput)
 │       └── system.rs            Pointer position and beep
